@@ -1,4 +1,4 @@
-name: Elsa 3 Prerelease
+name: Elsa 3 Custom Packages
 on:
   workflow_dispatch:
   push:
