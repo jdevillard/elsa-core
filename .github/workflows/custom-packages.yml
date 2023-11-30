@@ -17,17 +17,14 @@ env:
 jobs:
   build:
     name: Build packages
+    environment: dev
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       
-      - uses: actions/setup-dotnet@v3
-        with:
-          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
-        env:
-          NUGET_AUTH_TOKEN: ${{secrets.AZURE_DEVOPS_PAT}}
+      
       
       - name: Verify commit exists in origin/v3-custom-package
         run: |
@@ -67,5 +64,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: elsa-nuget-packages
+      
+      - uses: actions/setup-dotnet@v3
+        with:
+          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.AZURE_DEVOPS_PAT}}
       - name: Publish to custom feed
         run: dotnet nuget push *.nupkg --api-key AureArtifacts --skip-duplicate
