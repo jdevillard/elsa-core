@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - v3-custom-package
+      - v3-custom-nuget
     tags:
       - preview-*hotfix-* # e.g. preview-1.0.0-hotfix-1
   release:
