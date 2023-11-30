@@ -7,6 +7,7 @@ namespace Elsa.Python.Activities;
 
 internal class RunPythonOptionsProvider : IActivityPropertyOptionsProvider
 {
+    public bool isRefreashable => false;
     public ValueTask<IDictionary<string, object>> GetOptionsAsync(PropertyInfo property, object? context, CancellationToken cancellationToken = default)
     {
         var options = new Dictionary<string, object>
