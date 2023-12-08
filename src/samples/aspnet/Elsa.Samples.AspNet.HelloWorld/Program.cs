@@ -1,4 +1,6 @@
 using Elsa.Extensions;
+using Elsa.Samples.AspNet.HelloWorld;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -10,7 +12,12 @@ services.AddElsa(elsa => elsa
     // Enable Elsa HTTP module (for HTTP related activities). 
     .UseHttp()
 );
-
+services.AddNotificationHandlersFrom(typeof(HandleLifecycle));
+builder.Logging.AddSimpleConsole(option =>
+{
+    option.TimestampFormat = "HH:mm:ss.fff";
+});
+builder.AddTelemetry();
 // Configure middleware pipeline.
 var app = builder.Build();
 

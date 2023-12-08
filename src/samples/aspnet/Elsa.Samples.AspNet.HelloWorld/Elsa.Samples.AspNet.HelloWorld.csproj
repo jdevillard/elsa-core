@@ -7,17 +7,25 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\bundles\Elsa\Elsa.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Http\Elsa.Http.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Identity\Elsa.Identity.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.JavaScript\Elsa.JavaScript.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Liquid\Elsa.Liquid.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.EntityFrameworkCore\Elsa.EntityFrameworkCore.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.ProtoActor\Elsa.ProtoActor.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Scheduling\Elsa.Scheduling.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Telnyx\Elsa.Telnyx.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.WorkflowContexts\Elsa.WorkflowContexts.csproj"/>
-        <ProjectReference Include="..\..\..\modules\Elsa.Workflows.Api\Elsa.Workflows.Api.csproj"/>
+      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.7.0-rc.1" />
+      <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0-rc.1" />
+      <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0-rc.1" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.6.0-rc.1" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.6.0-rc.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\bundles\Elsa\Elsa.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Http\Elsa.Http.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Identity\Elsa.Identity.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.JavaScript\Elsa.JavaScript.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Liquid\Elsa.Liquid.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.EntityFrameworkCore\Elsa.EntityFrameworkCore.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.ProtoActor\Elsa.ProtoActor.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Scheduling\Elsa.Scheduling.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Telnyx\Elsa.Telnyx.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.WorkflowContexts\Elsa.WorkflowContexts.csproj" />
+        <ProjectReference Include="..\..\..\modules\Elsa.Workflows.Api\Elsa.Workflows.Api.csproj" />
     </ItemGroup>
 
 </Project>
