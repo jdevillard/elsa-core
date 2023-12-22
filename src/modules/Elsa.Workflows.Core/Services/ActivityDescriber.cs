@@ -167,7 +167,7 @@ public class ActivityDescriber : IActivityDescriber
             GetUIHint(wrappedPropertyType, inputAttribute),
             inputAttribute?.DisplayName ?? propertyInfo.Name.Humanize(LetterCasing.Title),
             descriptionAttribute?.Description ?? inputAttribute?.Description,
-            inputOptions,
+            inputOptions.OptionsItems,
             inputAttribute?.Category,
             inputAttribute?.Order ?? 0,
             _defaultValueResolver.GetDefaultValue(propertyInfo),
@@ -178,7 +178,10 @@ public class ActivityDescriber : IActivityDescriber
             false,
             autoEvaluate,
             default,
-            propertyInfo
+            propertyInfo,
+            bool.Parse(inputOptions.ProviderMetadata["isRefreshable"].ToString()),
+            inputAttribute?.DependsOn,
+            inputAttribute?.ActivatedBy
         );
     }
 

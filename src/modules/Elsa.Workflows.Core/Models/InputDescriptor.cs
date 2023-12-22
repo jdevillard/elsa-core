@@ -1,4 +1,5 @@
 using System.Reflection;
+using Elsa.Features.Attributes;
 using Elsa.Workflows.Core.Contracts;
 
 namespace Elsa.Workflows.Core.Models;
@@ -34,7 +35,10 @@ public class InputDescriptor : PropertyDescriptor
         bool isSynthetic = false,
         bool autoEvaluate = true,
         Type? storageDriverType = default,
-        PropertyInfo? propertyInfo = default)
+        PropertyInfo? propertyInfo = default,
+        bool isRefreashable = false,
+        string[]? dependsOn = default,
+        string[]? activatedBy = default)
     {
         Name = name;
         Type = type;
@@ -52,6 +56,9 @@ public class InputDescriptor : PropertyDescriptor
         IsReadOnly = isReadOnly;
         AutoEvaluate = autoEvaluate;
         StorageDriverType = storageDriverType;
+        IsRefreashable = isRefreashable;
+        DependsOn = dependsOn;
+        ActivatedBy = activatedBy;
         IsSynthetic = isSynthetic;
         IsBrowsable = isBrowsable;
         IsSerializable = isSerializable;
@@ -103,4 +110,19 @@ public class InputDescriptor : PropertyDescriptor
     /// True if the expression should be evaluated automatically, false otherwise. Defaults to true.
     /// </summary>
     public bool AutoEvaluate { get; set; } = true;
+    
+    /// <summary>
+    /// True if UI can call the Options Provider to refresh the option values
+    /// </summary>
+    public bool? IsRefreashable { get; }
+
+    /// <summary>
+    /// List of Property Name on which the property depends
+    /// </summary>
+    public string[]? DependsOn { get; }
+
+    /// <summary>
+    /// List of Property Name that activate this property
+    /// </summary>
+    public string[]? ActivatedBy { get; }
 }
