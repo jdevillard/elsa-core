@@ -156,7 +156,7 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
         var authorization = Authorization.GetOrDefault(context);
 
         if (!string.IsNullOrWhiteSpace(authorization))
-            request.Headers.Authorization = AuthenticationHeaderValue.Parse(authorization);
+            request.Headers.TryAddWithoutValidation("Authorization", authorization);
 
         foreach (var header in headers)
             request.Headers.Add(header.Key, header.Value.AsEnumerable());
