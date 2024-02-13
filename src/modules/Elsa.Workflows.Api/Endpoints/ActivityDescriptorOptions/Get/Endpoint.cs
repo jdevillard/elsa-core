@@ -43,6 +43,6 @@ internal class Get : ElsaEndpoint<Request, Response>
         
         var inputOptions = await _optionsResolver.GetUIPropertiesAsync(propertyDescriptor.PropertyInfo!, request.Context, cancellationToken);
 
-        await SendOkAsync(new Response(inputOptions.OptionsItems), cancellationToken);
+        await SendOkAsync(new Response(inputOptions), cancellationToken);
     }
 }
