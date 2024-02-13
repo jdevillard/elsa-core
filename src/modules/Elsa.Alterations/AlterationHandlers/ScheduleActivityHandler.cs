@@ -2,8 +2,8 @@ using Elsa.Alterations.AlterationTypes;
 using Elsa.Alterations.Core.Abstractions;
 using Elsa.Alterations.Core.Contexts;
 using Elsa.Extensions;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Signals;
+using Elsa.Workflows;
+using Elsa.Workflows.Signals;
 
 namespace Elsa.Alterations.AlterationHandlers;
 
@@ -28,7 +28,7 @@ public class ScheduleActivityHandler : AlterationHandlerBase<ScheduleActivity>
         {
             // If the activity is in a faulted state, reset it to Running.
             if (existingActivityExecutionContext.Status == ActivityStatus.Faulted)
-                existingActivityExecutionContext.Status = ActivityStatus.Running;
+                existingActivityExecutionContext.TransitionTo(ActivityStatus.Running);
 
             // Schedule the activity execution context.
             var parentContext = existingActivityExecutionContext.ParentActivityExecutionContext;

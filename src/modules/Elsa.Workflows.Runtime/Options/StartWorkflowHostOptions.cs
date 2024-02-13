@@ -1,4 +1,4 @@
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Models;
 
 namespace Elsa.Workflows.Runtime.Options;
 
@@ -24,4 +24,9 @@ public class StartWorkflowHostOptions
 
     /// <summary>Cancellation tokens that can be used to cancel the workflow instance without cancelling system-level operations.</summary>
     public CancellationTokens CancellationTokens { get; set; }
+
+    /// <summary>
+    /// Callback method that will be called when the status of the workflow has been updated
+    /// </summary>
+    public Action<WorkflowExecutionContext>? StatusUpdatedCallback { get; set; }
 }

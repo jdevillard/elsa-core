@@ -1,8 +1,8 @@
 using Elsa.Common.Contracts;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Models;
-using Elsa.Workflows.Core.Options;
+using Elsa.Workflows;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Models;
+using Elsa.Workflows.Options;
 
 // ReSharper disable once CheckNamespace
 namespace Elsa.Extensions;
@@ -125,36 +125,4 @@ public static class WorkflowExecutionContextExtensions
     /// Returns true if all activities have completed or canceled, false otherwise.
     /// </summary>
     public static bool AllActivitiesCompleted(this WorkflowExecutionContext workflowExecutionContext) => workflowExecutionContext.ActivityExecutionContexts.All(x => x.IsCompleted);
-
-    /// <summary>
-    /// Adds a new <see cref="WorkflowExecutionLogEntry"/> to the execution log of the current <see cref="WorkflowExecutionContext"/>.
-    /// </summary>
-    /// <param name="context">The <see cref="WorkflowExecutionContext"/></param> being extended.
-    /// <param name="eventName">The name of the event.</param>
-    /// <param name="message">The message of the event.</param>
-    /// <param name="payload">Any contextual data related to this event.</param>
-    /// <returns>Returns the created <see cref="WorkflowExecutionLogEntry"/>.</returns>
-    public static WorkflowExecutionLogEntry AddExecutionLogEntry(this WorkflowExecutionContext context, string eventName, string? message = default, object? payload = default)
-    {
-        var now = context.GetRequiredService<ISystemClock>().UtcNow;
-
-        var logEntry = new WorkflowExecutionLogEntry(
-            context.Id,
-            default,
-            context.Workflow.Id,
-            context.Workflow.Type,
-            context.Workflow.Identity.Version,
-            context.Workflow.Name,
-            context.Workflow.Identity.Id,
-            default,
-            now,
-            context.ExecutionLogSequence++,
-            eventName,
-            message,
-            context.Workflow.GetSource(),
-            payload);
-
-        context.ExecutionLog.Add(logEntry);
-        return logEntry;
-    }
 }

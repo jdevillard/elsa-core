@@ -1,7 +1,7 @@
 using Elsa.Common.Models;
 using Elsa.Extensions;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
 using Elsa.Workflows.Management.Contracts;
 using Elsa.Workflows.Management.Entities;
 using Elsa.Workflows.Management.Filters;
@@ -35,12 +35,12 @@ public class WorkflowDefinitionService : IWorkflowDefinitionService
     public async Task<Workflow> MaterializeWorkflowAsync(WorkflowDefinition definition, CancellationToken cancellationToken = default)
     {
         var materializers = _materializers();
-        var provider = materializers.FirstOrDefault(x => x.Name == definition.MaterializerName);
+        var materializer = materializers.FirstOrDefault(x => x.Name == definition.MaterializerName);
 
-        if (provider == null)
+        if (materializer == null)
             throw new Exception("Provider not found");
 
-        var workflow = await provider.MaterializeAsync(definition, cancellationToken);
+        var workflow = await materializer.MaterializeAsync(definition, cancellationToken);
         var graph = (await _activityVisitor.VisitAsync(workflow, cancellationToken)).Flatten().ToList();
 
         // Assign identities.

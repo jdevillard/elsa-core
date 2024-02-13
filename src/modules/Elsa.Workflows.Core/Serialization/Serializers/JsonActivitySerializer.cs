@@ -1,11 +1,11 @@
 using System.Text.Json;
 using Elsa.Common.Serialization;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Serialization.Converters;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Serialization.Converters;
 
-namespace Elsa.Workflows.Core.Serialization.Serializers;
+namespace Elsa.Workflows.Serialization.Serializers;
 
-/// <inheritdoc cref="Elsa.Workflows.Core.Contracts.IActivitySerializer" />
+/// <inheritdoc cref="IActivitySerializer" />
 public class JsonActivitySerializer : ConfigurableSerializer, IActivitySerializer
 {
     /// <summary>
@@ -44,5 +44,6 @@ public class JsonActivitySerializer : ConfigurableSerializer, IActivitySerialize
     protected override void AddConverters(JsonSerializerOptions options)
     {
         options.Converters.Add(CreateInstance<TypeJsonConverter>());
+        options.Converters.Add(CreateInstance<InputJsonConverterFactory>());
     }
 }

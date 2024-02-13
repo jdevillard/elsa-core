@@ -1,13 +1,13 @@
-using Elsa.Extensions;
-using Elsa.Workflows.Core.Serialization.ReferenceHandlers;
-using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Elsa.Extensions;
+using Elsa.Workflows.Serialization.ReferenceHandlers;
+using Newtonsoft.Json.Linq;
 
-namespace Elsa.Workflows.Core.Serialization.Converters;
+namespace Elsa.Workflows.Serialization.Converters;
 
 /// <summary>
 /// Reads objects as primitive types rather than <see cref="JsonElement"/> values while also maintaining the .NET type name for reconstructing the actual type.
@@ -158,7 +158,7 @@ public class PolymorphicObjectConverter : JsonConverter<object>
         var newOptions = new JsonSerializerOptions(options);
         var type = value.GetType();
 
-        if (type.IsPrimitive || value is string or DateTimeOffset or DateTime or DateOnly or TimeOnly or JsonElement or Guid or TimeSpan or Uri or Version or Enum)
+        if (type.IsPrimitive || value is string or decimal or DateTimeOffset or DateTime or DateOnly or TimeOnly or JsonElement or Guid or TimeSpan or Uri or Version or Enum)
         {
             // Remove the converter so that we don't end up in an infinite loop.
             newOptions.Converters.RemoveWhere(x => x is PolymorphicObjectConverterFactory);

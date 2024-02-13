@@ -1,10 +1,11 @@
 using System.Net.Http.Headers;
 using Elsa.Extensions;
-using Elsa.Http.ActivityOptionProviders;
 using Elsa.Http.ContentWriters;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Attributes;
-using Elsa.Workflows.Core.Models;
+using Elsa.Http.UIHints;
+using Elsa.Workflows;
+using Elsa.Workflows.Attributes;
+using Elsa.Workflows.UIHints;
+using Elsa.Workflows.Models;
 using HttpHeaders = Elsa.Http.Models.HttpHeaders;
 
 namespace Elsa.Http;
@@ -33,7 +34,7 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
         Description = "The HTTP method to use when sending the request.",
         Options = new[] { "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD" },
         DefaultValue = "GET",
-        UIHint = InputUIHints.Dropdown
+        UIHint = InputUIHints.DropDown
     )]
     public Input<string> Method { get; set; } = new("GET");
 
@@ -48,8 +49,8 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
     /// </summary>
     [Input(
         Description = "The content type to use when sending the request.",
-        OptionsProvider = typeof(HttpContentTypeOptionsProvider),
-        UIHint = InputUIHints.Dropdown
+        UIHandler = typeof(HttpContentTypeOptionsProvider),
+        UIHint = InputUIHints.DropDown
     )]
     public Input<string?> ContentType { get; set; } = default!;
 
@@ -57,23 +58,42 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
     /// The Authorization header value to send with the request.
     /// </summary>
     /// <example>Bearer {some-access-token}</example>
-    [Input(
-        Description = "The Authorization header value to send with the request. For example: Bearer {some-access-token}",
-        Category = "Security"
-    )]
+    [Input(Description = "The Authorization header value to send with the request. For example: Bearer {some-access-token}", Category = "Security")]
     public Input<string?> Authorization { get; set; } = default!;
+
+    /// <summary>
+    /// A value that allows to add the Authorization header without validation.
+    /// </summary>
+    [Input(Description = "A value that allows to add the Authorization header without validation.", Category = "Security")]
+    public Input<bool> DisableAuthorizationHeaderValidation { get; set; } = default!;
 
     /// <summary>
     /// The headers to send along with the request.
     /// </summary>
-    [Input(Description = "The headers to send along with the request.", Category = "Advanced")]
+    [Input(
+        Description = "The headers to send along with the request.",
+        UIHint = InputUIHints.JsonEditor,
+        Category = "Advanced"
+    )]
     public Input<HttpHeaders?> RequestHeaders { get; set; } = new(new HttpHeaders());
 
+    /// <summary>
+    /// The HTTP response status code
+    /// </summary>
+    [Output(Description = "The HTTP response status code")]
+    public Output<int> StatusCode { get; set; } = default!;
+    
     /// <summary>
     /// The parsed content, if any.
     /// </summary>
     [Output(Description = "The parsed content, if any.")]
     public Output<object?> ParsedContent { get; set; } = default!;
+
+    /// <summary>
+    /// The response headers that were received.
+    /// </summary>
+    [Output(Description = "The response headers that were received.")]
+    public Output<HttpHeaders?> ResponseHeaders { get; set; } = default!;
 
     /// <inheritdoc />
     protected override async ValueTask ExecuteAsync(ActivityExecutionContext context)
@@ -107,8 +127,13 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
         {
             var response = await httpClient.SendAsync(request, cancellationToken);
             var parsedContent = await ParseContentAsync(context, response.Content);
+            var statusCode = (int)response.StatusCode;
+            var responseHeaders = new HttpHeaders(response.Headers);
+            
             context.Set(Result, response);
             context.Set(ParsedContent, parsedContent);
+            context.Set(StatusCode, statusCode);
+            context.Set(ResponseHeaders, responseHeaders);
 
             await HandleResponseAsync(context, response);
         }
@@ -154,9 +179,13 @@ public abstract class SendHttpRequestBase : Activity<HttpResponseMessage>
         var request = new HttpRequestMessage(new HttpMethod(method), url);
         var headers = context.GetHeaders(RequestHeaders);
         var authorization = Authorization.GetOrDefault(context);
+        var addAuthorizationWithoutValidation = DisableAuthorizationHeaderValidation.GetOrDefault(context);
 
         if (!string.IsNullOrWhiteSpace(authorization))
-            request.Headers.TryAddWithoutValidation("Authorization", authorization);
+            if (addAuthorizationWithoutValidation)
+                request.Headers.TryAddWithoutValidation("Authorization", authorization);
+            else
+                request.Headers.Authorization = AuthenticationHeaderValue.Parse(authorization);
 
         foreach (var header in headers)
             request.Headers.Add(header.Key, header.Value.AsEnumerable());

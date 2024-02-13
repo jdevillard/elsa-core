@@ -6,7 +6,7 @@ using Elsa.ProtoActor.HostedServices;
 using Elsa.ProtoActor.Mappers;
 using Elsa.ProtoActor.ProtoBuf;
 using Elsa.ProtoActor.Services;
-using Elsa.Workflows.Core.Features;
+using Elsa.Workflows.Features;
 using Elsa.Workflows.Runtime.Features;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.DependencyInjection;
@@ -119,13 +119,13 @@ public class ProtoActorFeature : FeatureBase
         Log.SetLoggerFactory(LoggerFactory.Create(l => l.AddConsole().SetMinimumLevel(LogLevel.Warning)));
 
         // Persistence.
-        services.AddSingleton(PersistenceProvider);
+        services.AddTransient(PersistenceProvider);
 
         // Mappers.
         services
-            .AddSingleton<BookmarkMapper>()
+            .AddScoped<BookmarkMapper>()
             .AddSingleton<ExceptionMapper>()
-            .AddSingleton<WorkflowExecutionResultMapper>()
+            .AddScoped<WorkflowExecutionResultMapper>()
             .AddSingleton<ActivityIncidentStateMapper>()
             .AddSingleton<WorkflowStatusMapper>()
             .AddSingleton<WorkflowSubStatusMapper>();

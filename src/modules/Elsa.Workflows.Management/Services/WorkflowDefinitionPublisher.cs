@@ -2,8 +2,8 @@ using Elsa.Common.Contracts;
 using Elsa.Common.Entities;
 using Elsa.Common.Models;
 using Elsa.Mediator.Contracts;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
 using Elsa.Workflows.Management.Contracts;
 using Elsa.Workflows.Management.Entities;
 using Elsa.Workflows.Management.Filters;
@@ -31,7 +31,6 @@ public class WorkflowDefinitionPublisher : IWorkflowDefinitionPublisher
     public WorkflowDefinitionPublisher(
         IWorkflowDefinitionService workflowDefinitionService,
         IWorkflowDefinitionStore workflowDefinitionStore,
-        IWorkflowValidator workflowValidator,
         INotificationSender notificationSender,
         IIdentityGenerator identityGenerator,
         IActivitySerializer activitySerializer,

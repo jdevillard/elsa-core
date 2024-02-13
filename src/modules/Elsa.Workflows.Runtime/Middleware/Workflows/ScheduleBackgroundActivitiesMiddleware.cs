@@ -1,7 +1,6 @@
 using Elsa.Extensions;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Pipelines.WorkflowExecution;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Pipelines.WorkflowExecution;
 using Elsa.Workflows.Runtime.Bookmarks;
 using Elsa.Workflows.Runtime.Contracts;
 using Elsa.Workflows.Runtime.Entities;
@@ -44,7 +43,7 @@ public class ScheduleBackgroundActivitiesMiddleware : WorkflowExecutionMiddlewar
 
         var scheduledBackgroundActivities = workflowExecutionContext
             .TransientProperties
-            .GetOrAdd(BackgroundActivityCollectorMiddleware.BackgroundActivitySchedulesKey, () => new List<ScheduledBackgroundActivity>());
+            .GetOrAdd(BackgroundActivityInvokerMiddleware.BackgroundActivitySchedulesKey, () => new List<ScheduledBackgroundActivity>());
   
         if (scheduledBackgroundActivities.Any())
         {

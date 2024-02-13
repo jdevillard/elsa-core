@@ -1,9 +1,9 @@
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
 using Elsa.Workflows.Management.Contracts;
 using Elsa.Workflows.Management.Entities;
 using Elsa.Workflows.Management.Models;
+using Elsa.Workflows.Models;
 
 namespace Elsa.Workflows.Management.Mappers;
 
@@ -116,6 +116,36 @@ public class WorkflowDefinitionMapper
             workflowDefinition.IsReadonly,
             workflowDefinition.IsLatest,
             workflowDefinition.IsPublished,
+            workflow.Options,
+            default,
+            workflow.Root);
+    }
+    
+    /// <summary>
+    /// Maps a <see cref="Workflow"/> to a <see cref="WorkflowDefinitionModel"/>.
+    /// </summary>
+    /// <param name="workflow">The source <see cref="WorkflowDefinition"/>.</param>
+    /// <returns>The mapped <see cref="WorkflowDefinitionModel"/>.</returns>
+    public WorkflowDefinitionModel Map(Workflow workflow)
+    {
+        var variables = _variableDefinitionMapper.Map(workflow.Variables).ToList();
+
+        return new(
+            workflow.Identity.Id,
+            workflow.Identity.DefinitionId,
+            workflow.WorkflowMetadata.Name,
+            workflow.WorkflowMetadata.Description,
+            workflow.WorkflowMetadata.CreatedAt,
+            workflow.Identity.Version,
+            workflow.WorkflowMetadata.ToolVersion,
+            variables,
+            workflow.Inputs,
+            workflow.Outputs,
+            workflow.Outcomes,
+            workflow.CustomProperties,
+            workflow.IsReadonly,
+            workflow.Publication.IsLatest,
+            workflow.Publication.IsPublished,
             workflow.Options,
             default,
             workflow.Root);

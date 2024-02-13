@@ -4,7 +4,7 @@ using Elsa.Extensions;
 using Elsa.Features.Abstractions;
 using Elsa.Features.Attributes;
 using Elsa.Features.Services;
-using Elsa.Workflows.Core.Contracts;
+using Elsa.Workflows.Contracts;
 using Elsa.Workflows.Management.Contracts;
 using Elsa.Workflows.Management.Handlers;
 using Elsa.Workflows.Runtime.ActivationValidators;
@@ -72,6 +72,11 @@ public class WorkflowRuntimeFeature : FeatureBase
     /// A factory that instantiates an <see cref="IWorkflowInboxMessageStore"/>.
     /// </summary>
     public Func<IServiceProvider, IWorkflowInboxMessageStore> WorkflowInboxStore { get; set; } = sp => sp.GetRequiredService<MemoryWorkflowInboxMessageStore>();
+
+    /// <summary>
+    /// A factory that instantiates an <see cref="IWorkflowExecutionContextStore"/>.
+    /// </summary>
+    public Func<IServiceProvider, IWorkflowExecutionContextStore> WorkflowExecutionContextStore { get; set; } = sp => sp.GetRequiredService<MemoryWorkflowExecutionContextStore>();
 
     /// <summary>
     /// A factory that instantiates an <see cref="IDistributedLockProvider"/>.
@@ -146,40 +151,42 @@ public class WorkflowRuntimeFeature : FeatureBase
 
         Services
             // Core.
-            .AddSingleton<ITriggerIndexer, TriggerIndexer>()
-            .AddSingleton<IWorkflowInstanceFactory, WorkflowInstanceFactory>()
+            .AddScoped<ITriggerIndexer, TriggerIndexer>()
+            .AddScoped<IWorkflowInstanceFactory, WorkflowInstanceFactory>()
             .AddSingleton<IWorkflowHostFactory, WorkflowHostFactory>()
-            .AddSingleton<IBackgroundActivityInvoker, DefaultBackgroundActivityInvoker>()
-            .AddSingleton(WorkflowRuntime)
-            .AddSingleton(WorkflowDispatcher)
-            .AddSingleton(BookmarkStore)
-            .AddSingleton(TriggerStore)
-            .AddSingleton(WorkflowExecutionLogStore)
-            .AddSingleton(ActivityExecutionLogStore)
-            .AddSingleton(WorkflowInboxStore)
+            .AddScoped<IBackgroundActivityInvoker, DefaultBackgroundActivityInvoker>()
+            .AddScoped(WorkflowRuntime)
+            .AddScoped(WorkflowDispatcher)
+            .AddScoped(BookmarkStore)
+            .AddScoped(TriggerStore)
+            .AddScoped(WorkflowExecutionLogStore)
+            .AddScoped(ActivityExecutionLogStore)
+            .AddScoped(WorkflowInboxStore)
+            .AddScoped(WorkflowExecutionContextStore)
             .AddSingleton(RunTaskDispatcher)
             .AddSingleton(BackgroundActivityScheduler)
-            .AddSingleton<IBookmarkManager, DefaultBookmarkManager>()
-            .AddSingleton<IActivityExecutionManager, DefaultActivityExecutionManager>()
-            .AddSingleton<IActivityExecutionStatsService, ActivityExecutionStatsService>()
-            .AddSingleton<IActivityExecutionMapper, DefaultActivityExecutionMapper>()
-            .AddSingleton<IWorkflowDefinitionStorePopulator, DefaultWorkflowDefinitionStorePopulator>()
-            .AddSingleton<IRegistriesPopulator, DefaultRegistriesPopulator>()
-            .AddSingleton<ITaskReporter, TaskReporter>()
-            .AddSingleton<SynchronousTaskDispatcher>()
-            .AddSingleton<BackgroundTaskDispatcher>()
-            .AddSingleton<IEventPublisher, EventPublisher>()
-            .AddSingleton<IWorkflowInbox, DefaultWorkflowInbox>()
-            .AddSingleton<IBookmarkUpdater, BookmarkUpdater>()
-            .AddSingleton<IBookmarksPersister, BookmarksPersister>()
+            .AddScoped<IBookmarkManager, DefaultBookmarkManager>()
+            .AddScoped<IActivityExecutionManager, DefaultActivityExecutionManager>()
+            .AddScoped<IActivityExecutionStatsService, ActivityExecutionStatsService>()
+            .AddScoped<IActivityExecutionMapper, DefaultActivityExecutionMapper>()
+            .AddScoped<IWorkflowDefinitionStorePopulator, DefaultWorkflowDefinitionStorePopulator>()
+            .AddScoped<IRegistriesPopulator, DefaultRegistriesPopulator>()
+            .AddScoped<IWorkflowRegistry, DefaultWorkflowRegistry>()
+            .AddScoped<ITaskReporter, TaskReporter>()
+            .AddScoped<SynchronousTaskDispatcher>()
+            .AddScoped<BackgroundTaskDispatcher>()
+            .AddScoped<IEventPublisher, EventPublisher>()
+            .AddScoped<IWorkflowInbox, DefaultWorkflowInbox>()
+            .AddScoped<IBookmarkUpdater, BookmarkUpdater>()
+            .AddScoped<IBookmarksPersister, BookmarksPersister>()
 
             // Lazy services.
-            .AddSingleton<Func<IEnumerable<IWorkflowProvider>>>(sp => sp.GetServices<IWorkflowProvider>)
-            .AddSingleton<Func<IEnumerable<IWorkflowMaterializer>>>(sp => sp.GetServices<IWorkflowMaterializer>)
+            .AddScoped<Func<IEnumerable<IWorkflowProvider>>>(sp => sp.GetServices<IWorkflowProvider>)
+            .AddScoped<Func<IEnumerable<IWorkflowMaterializer>>>(sp => sp.GetServices<IWorkflowMaterializer>)
 
             // Noop stores.
-            .AddSingleton<MemoryWorkflowExecutionLogStore>()
-            .AddSingleton<MemoryActivityExecutionStore>()
+            .AddScoped<MemoryWorkflowExecutionLogStore>()
+            .AddScoped<MemoryActivityExecutionStore>()
 
             // Memory stores.
             .AddMemoryStore<StoredBookmark, MemoryBookmarkStore>()
@@ -187,9 +194,10 @@ public class WorkflowRuntimeFeature : FeatureBase
             .AddMemoryStore<WorkflowExecutionLogRecord, MemoryWorkflowExecutionLogStore>()
             .AddMemoryStore<ActivityExecutionRecord, MemoryActivityExecutionStore>()
             .AddMemoryStore<WorkflowInboxMessage, MemoryWorkflowInboxMessageStore>()
+            .AddMemoryStore<WorkflowExecutionContext, MemoryWorkflowExecutionContextStore>()
 
             // Distributed locking.
-            .AddSingleton(DistributedLockProvider)
+            .AddScoped(DistributedLockProvider)
 
             // Workflow definition providers.
             .AddWorkflowDefinitionProvider<ClrWorkflowProvider>()
@@ -206,12 +214,13 @@ public class WorkflowRuntimeFeature : FeatureBase
             .AddNotificationHandler<DeleteActivityExecutionLogRecords>()
             .AddNotificationHandler<ReadWorkflowInboxMessage>()
             .AddNotificationHandler<DeliverWorkflowMessagesFromInbox>()
-            .AddNotificationHandler<DeleteWorkflowExecutionLogRecords>()
+            .AddNotificationHandler<DeleteWorkflowExecutionLogRecords>()            
+            .AddNotificationHandler<WorkflowExecutionContextNotificationsHandler>()
 
             // Workflow activation strategies.
-            .AddSingleton<IWorkflowActivationStrategy, SingletonStrategy>()
-            .AddSingleton<IWorkflowActivationStrategy, CorrelatedSingletonStrategy>()
-            .AddSingleton<IWorkflowActivationStrategy, CorrelationStrategy>()
+            .AddScoped<IWorkflowActivationStrategy, SingletonStrategy>()
+            .AddScoped<IWorkflowActivationStrategy, CorrelatedSingletonStrategy>()
+            .AddScoped<IWorkflowActivationStrategy, CorrelationStrategy>()
             ;
     }
 }

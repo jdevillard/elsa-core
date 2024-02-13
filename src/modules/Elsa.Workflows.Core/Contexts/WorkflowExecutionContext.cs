@@ -1,19 +1,19 @@
+using System.Collections.ObjectModel;
+using Elsa.Common.Contracts;
 using Elsa.Expressions.Helpers;
 using Elsa.Expressions.Models;
 using Elsa.Extensions;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Services;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.ObjectModel;
-using Elsa.Common.Contracts;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Memory;
-using Elsa.Workflows.Core.Models;
-using Elsa.Workflows.Core.Options;
-using Elsa.Workflows.Core.State;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Memory;
+using Elsa.Workflows.Models;
+using Elsa.Workflows.Options;
+using Elsa.Workflows.Services;
+using Elsa.Workflows.State;
 using JetBrains.Annotations;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Elsa.Workflows.Core;
+namespace Elsa.Workflows;
 
 /// <summary>
 /// A delegate entry that is used by activities to be notified when the activities they scheduled are completed.
@@ -28,7 +28,7 @@ public record ActivityCompletionCallbackEntry(ActivityExecutionContext Owner, Ac
 /// Provides context to the currently executing workflow.
 /// </summary>
 [PublicAPI]
-public class WorkflowExecutionContext : IExecutionContext
+public partial class WorkflowExecutionContext : IExecutionContext
 {
     private static readonly object ActivityOutputRegistryKey = new();
     private static readonly object LastActivityResultKey = new();
@@ -37,6 +37,7 @@ public class WorkflowExecutionContext : IExecutionContext
     private readonly IList<ActivityCompletionCallbackEntry> _completionCallbackEntries = new List<ActivityCompletionCallbackEntry>();
     private IList<ActivityExecutionContext> _activityExecutionContexts;
     private readonly IHasher _hasher;
+    private readonly Action<WorkflowExecutionContext>? _statusUpdatedCallback;
 
     /// <summary>
     /// Initializes a new instance of <see cref="WorkflowExecutionContext"/>.
@@ -51,6 +52,7 @@ public class WorkflowExecutionContext : IExecutionContext
         string? triggerActivityId,
         IEnumerable<ActivityIncident> incidents,
         DateTimeOffset createdAt,
+        Action<WorkflowExecutionContext>? statusUpdatedCallback,
         CancellationTokens cancellationTokens)
     {
         ServiceProvider = serviceProvider;
@@ -70,6 +72,13 @@ public class WorkflowExecutionContext : IExecutionContext
         CreatedAt = createdAt;
         CancellationTokens = cancellationTokens;
         Incidents = incidents.ToList();
+
+        var appSource = CancellationTokenSource.CreateLinkedTokenSource(CancellationTokens.ApplicationCancellationToken);
+        _cancellationTokenSources.Add(appSource);
+        var sysSource = CancellationTokenSource.CreateLinkedTokenSource(CancellationTokens.SystemCancellationToken);
+        _cancellationTokenSources.Add(sysSource);
+        _cancellationRegistrations.Add(appSource.Token.Register(CancelWorkflow));
+        _cancellationRegistrations.Add(sysSource.Token.Register(CancelWorkflow));
     }
 
     /// <summary>
@@ -84,6 +93,7 @@ public class WorkflowExecutionContext : IExecutionContext
         IDictionary<string, object>? properties = default,
         ExecuteActivityDelegate? executeDelegate = default,
         string? triggerActivityId = default,
+        Action<WorkflowExecutionContext>? statusUpdatedCallback = default,
         CancellationTokens cancellationTokens = default)
     {
         var systemClock = serviceProvider.GetRequiredService<ISystemClock>();
@@ -99,6 +109,7 @@ public class WorkflowExecutionContext : IExecutionContext
             properties,
             executeDelegate,
             triggerActivityId,
+            statusUpdatedCallback,
             cancellationTokens
         );
     }
@@ -115,6 +126,7 @@ public class WorkflowExecutionContext : IExecutionContext
         IDictionary<string, object>? properties = default,
         ExecuteActivityDelegate? executeDelegate = default,
         string? triggerActivityId = default,
+        Action<WorkflowExecutionContext>? statusUpdatedCallback = default,
         CancellationTokens cancellationTokens = default)
     {
         var workflowExecutionContext = await CreateAsync(
@@ -128,6 +140,7 @@ public class WorkflowExecutionContext : IExecutionContext
             properties,
             executeDelegate,
             triggerActivityId,
+            statusUpdatedCallback,
             cancellationTokens);
 
         var workflowStateExtractor = serviceProvider.GetRequiredService<IWorkflowStateExtractor>();
@@ -150,6 +163,7 @@ public class WorkflowExecutionContext : IExecutionContext
         IDictionary<string, object>? properties = default,
         ExecuteActivityDelegate? executeDelegate = default,
         string? triggerActivityId = default,
+        Action<WorkflowExecutionContext>? statusUpdatedCallback = default,
         CancellationTokens cancellationTokens = default)
     {
         // Setup a workflow execution context.
@@ -163,6 +177,7 @@ public class WorkflowExecutionContext : IExecutionContext
             triggerActivityId,
             incidents,
             createdAt,
+            statusUpdatedCallback,
             cancellationTokens)
         {
             MemoryRegister = workflow.CreateRegister()
@@ -203,6 +218,9 @@ public class WorkflowExecutionContext : IExecutionContext
         NodeIdLookup = nodes.ToDictionary(x => x.NodeId);
         NodeHashLookup = nodes.ToDictionary(x => Hash(x.NodeId));
         NodeActivityLookup = nodes.ToDictionary(x => x.Activity);
+        
+        foreach (var activityExecutionContext in ActivityExecutionContexts) 
+            activityExecutionContext.Activity = NodeIdLookup[activityExecutionContext.Activity.NodeId].Activity;
     }
 
     /// <summary>
@@ -521,6 +539,20 @@ public class WorkflowExecutionContext : IExecutionContext
             throw new Exception($"Cannot transition from {SubStatus} to {subStatus}");
 
         SubStatus = subStatus;
+
+        //For now only trigger on Cancelled, since the other statuses are handling via the host/runner
+        if (SubStatus == WorkflowSubStatus.Cancelled
+            && _statusUpdatedCallback is not null)
+            _statusUpdatedCallback(this);
+        
+        if (Status == WorkflowStatus.Finished
+            || SubStatus == WorkflowSubStatus.Suspended)
+        {
+            foreach (var registration in _cancellationRegistrations)
+            {
+                registration.Dispose();
+            }
+        }
     }
 
     /// <summary>

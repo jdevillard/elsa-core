@@ -1,10 +1,10 @@
 using Elsa.Extensions;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Memory;
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Memory;
+using Elsa.Workflows.Models;
 
-namespace Elsa.Workflows.Core.Builders;
+namespace Elsa.Workflows.Builders;
 
 /// <inheritdoc />
 public class WorkflowBuilder : IWorkflowBuilder
@@ -112,7 +112,60 @@ public class WorkflowBuilder : IWorkflowBuilder
     /// <inheritdoc />
     public IWorkflowBuilder WithVariables(params Variable[] variables)
     {
-        foreach (var variable in variables) Variables.Add(variable);
+        foreach (var variable in variables)
+            Variables.Add(variable);
+        return this;
+    }
+
+    /// <inheritdoc />
+    public InputDefinition WithInput<T>(string name, string? description = default)
+    {
+        return WithInput(inputDefinition =>
+        {
+            inputDefinition.Name = name;
+
+            if (description != null)
+                inputDefinition.Description = description;
+        });
+    }
+
+    /// <inheritdoc />
+    public InputDefinition WithInput(string name, Type type, string? description = default)
+    {
+        return WithInput(inputDefinition =>
+        {
+            inputDefinition.Name = name;
+            inputDefinition.Type = type;
+
+            if (description != null)
+                inputDefinition.Description = description;
+        });
+    }
+
+    /// <inheritdoc />
+    public InputDefinition WithInput(string name, Type type, Action<InputDefinition>? setup = default)
+    {
+        return WithInput(inputDefinition =>
+        {
+            inputDefinition.Name = name;
+            inputDefinition.Type = type;
+            setup?.Invoke(inputDefinition);
+        });
+    }
+
+    /// <inheritdoc />
+    public InputDefinition WithInput(Action<InputDefinition> setup)
+    {
+        var inputDefinition = new InputDefinition();
+        setup(inputDefinition);
+        Inputs.Add(inputDefinition);
+        return inputDefinition;
+    }
+
+    /// <inheritdoc />
+    public IWorkflowBuilder WithInput(InputDefinition inputDefinition)
+    {
+        Inputs.Add(inputDefinition);
         return this;
     }
 

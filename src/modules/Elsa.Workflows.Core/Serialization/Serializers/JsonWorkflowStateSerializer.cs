@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Elsa.Expressions.Contracts;
 using Elsa.Mediator.Contracts;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Notifications;
-using Elsa.Workflows.Core.Serialization.Converters;
-using Elsa.Workflows.Core.Serialization.ReferenceHandlers;
-using Elsa.Workflows.Core.State;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Notifications;
+using Elsa.Workflows.Serialization.Converters;
+using Elsa.Workflows.Serialization.ReferenceHandlers;
+using Elsa.Workflows.State;
 using Microsoft.Extensions.Logging;
 
-namespace Elsa.Workflows.Core.Serialization.Serializers;
+namespace Elsa.Workflows.Serialization.Serializers;
 
 /// <summary>
 /// Serializes and deserializes workflow states from and to JSON.
@@ -37,7 +37,7 @@ public class JsonWorkflowStateSerializer : IWorkflowStateSerializer
         var options = GetSerializerOptions();
         var serializingWorkflowState = new SerializingWorkflowState(options);
         await _notificationSender.SendAsync(serializingWorkflowState, cancellationToken);
-        
+
         return JsonSerializer.Serialize(workflowState, options);
     }
 
@@ -47,7 +47,7 @@ public class JsonWorkflowStateSerializer : IWorkflowStateSerializer
         var options = GetSerializerOptions();
         var serializingWorkflowState = new SerializingWorkflowState(options);
         await _notificationSender.SendAsync(serializingWorkflowState, cancellationToken);
-        
+
         return JsonSerializer.SerializeToUtf8Bytes(workflowState, options);
     }
 
@@ -57,7 +57,7 @@ public class JsonWorkflowStateSerializer : IWorkflowStateSerializer
         var options = GetSerializerOptions();
         var serializingWorkflowState = new SerializingWorkflowState(options);
         await _notificationSender.SendAsync(serializingWorkflowState, cancellationToken);
-        
+
         return JsonSerializer.SerializeToElement(workflowState, options);
     }
 
@@ -111,7 +111,7 @@ public class JsonWorkflowStateSerializer : IWorkflowStateSerializer
         options.Converters.Add(new PolymorphicObjectConverterFactory());
         options.Converters.Add(new TypeJsonConverter(_wellKnownTypeRegistry));
         options.Converters.Add(new VariableConverterFactory(_wellKnownTypeRegistry, _loggerFactory));
-        
+
         return options;
     }
 }

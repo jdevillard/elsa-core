@@ -1,10 +1,10 @@
 using System.Runtime.CompilerServices;
 using Elsa.Common.Models;
 using Elsa.Extensions;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Attributes;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Attributes;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.UIHints;
+using Elsa.Workflows.Models;
 using Elsa.Workflows.Runtime.Bookmarks;
 using Elsa.Workflows.Runtime.Contracts;
 using Elsa.Workflows.Runtime.Requests;
@@ -28,6 +28,7 @@ public class DispatchWorkflow : Activity<object>
     /// The definition ID of the workflow to dispatch. 
     /// </summary>
     [Input(
+        DisplayName = "Workflow Definition",
         Description = "The definition ID of the workflow to dispatch.",
         UIHint = InputUIHints.WorkflowDefinitionPicker
     )]
@@ -36,7 +37,10 @@ public class DispatchWorkflow : Activity<object>
     /// <summary>
     /// The correlation ID to associate the workflow with. 
     /// </summary>
-    [Input(Description = "The correlation ID to associate the workflow with.")]
+    [Input(
+        DisplayName = "Correlation ID",
+        Description = "The correlation ID to associate the workflow with."
+    )]
     public Input<string?> CorrelationId { get; set; } = default!;
 
     /// <summary>

@@ -1,13 +1,13 @@
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Helpers;
-using Elsa.Workflows.Core.Models;
-using Elsa.Workflows.Core.Options;
-using Elsa.Workflows.Core.State;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Helpers;
+using Elsa.Workflows.Models;
+using Elsa.Workflows.Options;
 using Elsa.Workflows.Runtime.Contracts;
 using Elsa.Workflows.Runtime.Options;
 using Elsa.Workflows.Runtime.Results;
+using Elsa.Workflows.State;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Elsa.Workflows.Runtime.Services;
@@ -17,26 +17,23 @@ namespace Elsa.Workflows.Runtime.Services;
 /// </summary>
 public class WorkflowHost : IWorkflowHost
 {
-    private readonly IWorkflowRunner _workflowRunner;
-    private readonly IEnumerable<IWorkflowActivationStrategy> _instantiationStrategies;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IIdentityGenerator _identityGenerator;
     private readonly ILogger<WorkflowHost> _logger;
 
     /// <summary>
-    /// Constructor.
+    /// Initializes a new instance of the <see cref="WorkflowHost"/> class.
     /// </summary>
     public WorkflowHost(
+        IServiceScopeFactory serviceScopeFactory,
         Workflow workflow,
         WorkflowState workflowState,
-        IWorkflowRunner workflowRunner,
-        IEnumerable<IWorkflowActivationStrategy> instantiationStrategies,
         IIdentityGenerator identityGenerator,
         ILogger<WorkflowHost> logger)
     {
         Workflow = workflow;
         WorkflowState = workflowState;
-        _workflowRunner = workflowRunner;
-        _instantiationStrategies = instantiationStrategies;
+        _serviceScopeFactory = serviceScopeFactory;
         _identityGenerator = identityGenerator;
         _logger = logger;
     }
@@ -55,7 +52,9 @@ public class WorkflowHost : IWorkflowHost
         if (strategyType == null)
             return true;
 
-        var strategy = _instantiationStrategies.FirstOrDefault(x => x.GetType() == strategyType);
+        using var scope = _serviceScopeFactory.CreateScope();
+        var instantiationStrategies = scope.ServiceProvider.GetServices<IWorkflowActivationStrategy>();
+        var strategy = instantiationStrategies.FirstOrDefault(x => x.GetType() == strategyType);
 
         if (strategy == null)
             return true;
@@ -81,10 +80,13 @@ public class WorkflowHost : IWorkflowHost
             Input = input,
             Properties = properties,
             TriggerActivityId = options?.TriggerActivityId,
+            StatusUpdatedCallback = options?.StatusUpdatedCallback,
             CancellationTokens = options?.CancellationTokens ?? cancellationToken
         };
 
-        var workflowResult = await _workflowRunner.RunAsync(Workflow, runOptions, cancellationToken);
+        using var scope = _serviceScopeFactory.CreateScope();
+        var workflowRunner = scope.ServiceProvider.GetRequiredService<IWorkflowRunner>();
+        var workflowResult = await workflowRunner.RunAsync(Workflow, runOptions, cancellationToken);
 
         WorkflowState = workflowResult.WorkflowState;
 
@@ -124,7 +126,9 @@ public class WorkflowHost : IWorkflowHost
             CancellationTokens = options?.CancellationTokens ?? cancellationToken
         };
 
-        var workflowResult = await _workflowRunner.RunAsync(Workflow, WorkflowState, runOptions, cancellationToken);
+        using var scope = _serviceScopeFactory.CreateScope();
+        var workflowRunner = scope.ServiceProvider.GetRequiredService<IWorkflowRunner>();
+        var workflowResult = await workflowRunner.RunAsync(Workflow, WorkflowState, runOptions, cancellationToken);
 
         WorkflowState = workflowResult.WorkflowState;
 

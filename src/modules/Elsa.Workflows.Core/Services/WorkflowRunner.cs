@@ -1,15 +1,15 @@
 using Elsa.Common.Contracts;
 using Elsa.Extensions;
 using Elsa.Mediator.Contracts;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Models;
-using Elsa.Workflows.Core.Notifications;
-using Elsa.Workflows.Core.Options;
-using Elsa.Workflows.Core.State;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Models;
+using Elsa.Workflows.Notifications;
+using Elsa.Workflows.Options;
+using Elsa.Workflows.State;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Elsa.Workflows.Core.Services;
+namespace Elsa.Workflows.Services;
 
 /// <inheritdoc />
 public class WorkflowRunner : IWorkflowRunner
@@ -94,6 +94,7 @@ public class WorkflowRunner : IWorkflowRunner
         var properties = options?.Properties;
         var correlationId = options?.CorrelationId;
         var triggerActivityId = options?.TriggerActivityId;
+        var statusUpdatedCallback = options?.StatusUpdatedCallback;
         var workflowExecutionContext = await WorkflowExecutionContext.CreateAsync(
             scope.ServiceProvider,
             workflow,
@@ -103,6 +104,7 @@ public class WorkflowRunner : IWorkflowRunner
             properties,
             default,
             triggerActivityId,
+            statusUpdatedCallback,
             options?.CancellationTokens ?? cancellationToken);
 
         // Schedule the first activity.
@@ -122,6 +124,7 @@ public class WorkflowRunner : IWorkflowRunner
         var properties = options?.Properties;
         var correlationId = options?.CorrelationId ?? workflowState.CorrelationId;
         var triggerActivityId = options?.TriggerActivityId;
+        var statusUpdatedCallback = options?.StatusUpdatedCallback;
         var workflowExecutionContext = await WorkflowExecutionContext.CreateAsync(
             scope.ServiceProvider,
             workflow,
@@ -130,6 +133,7 @@ public class WorkflowRunner : IWorkflowRunner
             input, properties,
             default,
             triggerActivityId,
+            statusUpdatedCallback,
             options?.CancellationTokens ?? cancellationToken);
 
         var bookmarkId = options?.BookmarkId;

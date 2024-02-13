@@ -1,10 +1,10 @@
 using Elsa.Extensions;
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Pipelines.ActivityExecution;
-using Elsa.Workflows.Core.Services;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Pipelines.ActivityExecution;
+using Elsa.Workflows.Services;
 
-namespace Elsa.Workflows.Core.Middleware.Activities;
+namespace Elsa.Workflows.Middleware.Activities;
 
 /// <summary>
 /// Provides extension methods to <see cref="IActivityExecutionPipelineBuilder"/>.
@@ -41,16 +41,24 @@ public class DefaultActivityInvokerMiddleware : IActivityExecutionMiddleware
 
         // Evaluate input properties.
         await EvaluateInputPropertiesAsync(context);
-
+        
+        // Prevent the activity from being started if cancellation is requested.
+        if (context.CancellationToken.IsCancellationRequested)
+        {
+            context.TransitionTo(ActivityStatus.Canceled);
+            context.AddExecutionLogEntry("Activity cancelled");
+            return;
+        }
+        
         // Check if the activity can be executed.
         if (!await context.Activity.CanExecuteAsync(context))
         {
-            context.Status = ActivityStatus.Pending;
+            context.TransitionTo(ActivityStatus.Pending);
             context.AddExecutionLogEntry("Precondition Failed", "Cannot execute at this time");
             return;
         }
 
-        context.Status = ActivityStatus.Running;
+        context.TransitionTo(ActivityStatus.Running);
 
         // Execute activity.
         await ExecuteActivityAsync(context);

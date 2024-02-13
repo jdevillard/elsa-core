@@ -4,18 +4,19 @@ using Elsa.Common.Contracts;
 using Elsa.Expressions.Helpers;
 using Elsa.Expressions.Models;
 using Elsa.Extensions;
-using Elsa.Workflows.Core.Contracts;
-using Elsa.Workflows.Core.Memory;
-using Elsa.Workflows.Core.Models;
-using Elsa.Workflows.Core.Options;
-using Elsa.Workflows.Core.Services;
+using Elsa.Mediator.Contracts;
+using Elsa.Workflows.Contracts;
+using Elsa.Workflows.Memory;
+using Elsa.Workflows.Models;
+using Elsa.Workflows.Options;
+using Elsa.Workflows.Services;
 
-namespace Elsa.Workflows.Core;
+namespace Elsa.Workflows;
 
 /// <summary>
 /// Represents the context of an activity execution.
 /// </summary>
-public class ActivityExecutionContext : IExecutionContext
+public partial class ActivityExecutionContext : IExecutionContext
 {
     private readonly ISystemClock _systemClock;
     private readonly List<Bookmark> _bookmarks = new();
@@ -47,6 +48,10 @@ public class ActivityExecutionContext : IExecutionContext
         Tag = tag;
         CancellationToken = cancellationToken;
         Id = id;
+        _publisher = GetRequiredService<INotificationSender>();
+
+        _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _cancellationRegistration = _cancellationTokenSource.Token.Register(CancelActivity);
     }
 
     /// <summary>
@@ -123,8 +128,21 @@ public class ActivityExecutionContext : IExecutionContext
     /// <summary>
     /// The current status of the activity.
     /// </summary>
-    public ActivityStatus Status { get; set; }
+    public ActivityStatus Status { get; private set; }
 
+    /// <summary>
+    /// Sets the current status of the activity.
+    /// </summary>
+    public void TransitionTo(ActivityStatus status)
+    {
+        Status = status;
+        
+        if (Status is ActivityStatus.Completed 
+            or ActivityStatus.Canceled
+            or ActivityStatus.Faulted)
+            _cancellationRegistration.Dispose();
+    }
+    
     /// <summary>
     /// Gets or sets the exception that occurred during the activity execution, if any.
     /// </summary>
@@ -230,6 +248,29 @@ public class ActivityExecutionContext : IExecutionContext
     /// <param name="options">The options used to schedule the activity.</param>
     public async ValueTask ScheduleActivityAsync(ActivityNode? activityNode, ActivityExecutionContext? owner = default, ScheduleWorkOptions? options = default)
     {
+        if (this.GetIsBackgroundExecution())
+        {
+            var scheduledActivity = new ScheduledActivity
+            {
+                ActivityNodeId = activityNode?.NodeId,
+                OwnerActivityInstanceId = owner?.Id,
+                Options = options != null ? new ScheduledActivityOptions
+                {
+                    CompletionCallback = options?.CompletionCallback?.Method.Name,
+                    Tag = options?.Tag,
+                    ExistingActivityInstanceId = options?.ExistingActivityExecutionContext?.Id,
+                    PreventDuplicateScheduling = options?.PreventDuplicateScheduling ?? false,
+                    Variables = options?.Variables?.ToList(),
+                    Input = options?.Input
+                } : default
+            };
+
+            var scheduledActivities = this.GetBackgroundScheduledActivities().ToList();
+            scheduledActivities.Add(scheduledActivity);
+            this.SetBackgroundScheduledActivities(scheduledActivities);
+            return;
+        }
+
         var completionCallback = options?.CompletionCallback;
         owner ??= this;
 

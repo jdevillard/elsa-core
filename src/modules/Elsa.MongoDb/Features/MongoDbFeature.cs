@@ -3,7 +3,7 @@ using Elsa.Features.Abstractions;
 using Elsa.Features.Services;
 using Elsa.MongoDb.Options;
 using Elsa.MongoDb.Serializers;
-using Elsa.Workflows.Core.Memory;
+using Elsa.Workflows.Memory;
 using Elsa.Workflows.Runtime.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -40,7 +40,7 @@ public class MongoDbFeature : FeatureBase
     {
         Services.Configure(Options);
 
-        Services.AddSingleton(sp => CreateDatabase(sp, ConnectionString));
+        Services.AddScoped(sp => CreateDatabase(sp, ConnectionString));
 
         RegisterSerializers();
         RegisterClassMaps();
@@ -48,16 +48,16 @@ public class MongoDbFeature : FeatureBase
 
     private static void RegisterSerializers()
     {
-        BsonSerializer.RegisterSerializer(typeof(object), new PolymorphicSerializer());
-        BsonSerializer.RegisterSerializer(typeof(Type), new TypeSerializer());
-        BsonSerializer.RegisterSerializer(typeof(Variable), new VariableSerializer());
-        BsonSerializer.RegisterSerializer(typeof(Version), new VersionSerializer());
-        BsonSerializer.RegisterSerializer(typeof(JsonElement), new JsonElementSerializer());
+        TryRegisterSerializerOrSkipWhenExist(typeof(object), new PolymorphicSerializer());
+        TryRegisterSerializerOrSkipWhenExist(typeof(Type), new TypeSerializer());
+        TryRegisterSerializerOrSkipWhenExist(typeof(Variable), new VariableSerializer());
+        TryRegisterSerializerOrSkipWhenExist(typeof(Version), new VersionSerializer());
+        TryRegisterSerializerOrSkipWhenExist(typeof(JsonElement), new JsonElementSerializer());
     }
 
     private static void RegisterClassMaps()
     {
-        BsonClassMap.RegisterClassMap<StoredBookmark>(cm =>
+        BsonClassMap.TryRegisterClassMap<StoredBookmark>(cm =>
         {
             cm.AutoMap(); // Automatically map other properties
             cm
@@ -66,6 +66,17 @@ public class MongoDbFeature : FeatureBase
         });
     }
 
+    private static void TryRegisterSerializerOrSkipWhenExist(Type type, IBsonSerializer serializer)
+    {
+       try
+       {
+           BsonSerializer.TryRegisterSerializer(type, serializer);
+       }
+       catch (BsonSerializationException ex)
+       {
+       }
+    }
+    
     private static IMongoDatabase CreateDatabase(IServiceProvider sp, string connectionString)
     {
         var options = sp.GetRequiredService<IOptions<MongoDbOptions>>().Value;

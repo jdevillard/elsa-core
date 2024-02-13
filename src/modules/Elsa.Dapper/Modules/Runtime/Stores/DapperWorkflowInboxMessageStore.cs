@@ -6,7 +6,7 @@ using Elsa.Dapper.Extensions;
 using Elsa.Dapper.Models;
 using Elsa.Dapper.Modules.Runtime.Records;
 using Elsa.Dapper.Services;
-using Elsa.Workflows.Core.Contracts;
+using Elsa.Workflows.Contracts;
 using Elsa.Workflows.Runtime.Contracts;
 using Elsa.Workflows.Runtime.Entities;
 using Elsa.Workflows.Runtime.Filters;
@@ -61,7 +61,7 @@ public class DapperWorkflowInboxMessageStore : IWorkflowInboxMessageStore
         if (pageArgs == null)
             return await _store.DeleteAsync(q => ApplyFilter(q, filter), cancellationToken);
 
-        return await _store.DeleteAsync(q => ApplyFilter(q, filter), pageArgs, new[] { new OrderField(nameof(WorkflowInboxMessage.CreatedAt), OrderDirection.Ascending) }, cancellationToken);
+        return await _store.DeleteAsync(q => ApplyFilter(q, filter), pageArgs, new[] { new OrderField(nameof(WorkflowInboxMessage.CreatedAt), OrderDirection.Ascending) }, cancellationToken: cancellationToken);
     }
 
     private void ApplyFilter(ParameterizedQuery query, params WorkflowInboxMessageFilter[] filters)

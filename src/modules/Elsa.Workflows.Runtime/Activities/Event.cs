@@ -1,10 +1,9 @@
 using System.Runtime.CompilerServices;
 using Elsa.Expressions.Models;
 using Elsa.Extensions;
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Attributes;
-using Elsa.Workflows.Core.Memory;
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Attributes;
+using Elsa.Workflows.Memory;
+using Elsa.Workflows.Models;
 using Elsa.Workflows.Runtime.Bookmarks;
 using JetBrains.Annotations;
 
@@ -17,6 +16,8 @@ namespace Elsa.Workflows.Runtime.Activities;
 [UsedImplicitly]
 public class Event : Trigger<object?>
 {
+    internal const string EventPayloadWorkflowInputKey = "__EventPayloadWorkflowInput";
+    
     /// <inheritdoc />
     internal Event([CallerFilePath] string? source = default, [CallerLineNumber] int? line = default) : base(source, line)
     {
@@ -80,6 +81,8 @@ public class Event : Trigger<object?>
             return;
         }
 
+        var input = context.GetWorkflowInput<object?>(EventPayloadWorkflowInputKey);
+        context.SetResult(input);
         await context.CompleteActivityAsync();
     }
 }

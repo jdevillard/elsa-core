@@ -1,8 +1,8 @@
-using Elsa.Workflows.Core.Activities;
-using Elsa.Workflows.Core.Memory;
-using Elsa.Workflows.Core.Models;
+using Elsa.Workflows.Activities;
+using Elsa.Workflows.Memory;
+using Elsa.Workflows.Models;
 
-namespace Elsa.Workflows.Core.Contracts;
+namespace Elsa.Workflows.Contracts;
 
 /// <summary>
 /// A workflow pipelineBuilder collects information about a workflow to be built programmatically.
@@ -109,6 +109,31 @@ public interface IWorkflowBuilder
     /// A fluent method for adding a variable to <see cref="Variables"/>.
     /// </summary>
     IWorkflowBuilder WithVariables(params Variable[] variables);
+    
+    /// <summary>
+    /// A fluent method for adding an input to <see cref="Inputs"/>.
+    /// </summary>
+    InputDefinition WithInput<T>(string name, string? description = default);
+    
+    /// <summary>
+    /// A fluent method for adding an input to <see cref="Inputs"/>.
+    /// </summary>
+    InputDefinition WithInput(string name, Type type, string? description = default);
+    
+    /// <summary>
+    /// A fluent method for adding an input to <see cref="Inputs"/>.
+    /// </summary>
+    InputDefinition WithInput(string name, Type type, Action<InputDefinition>? setup = default);
+    
+    /// <summary>
+    /// A fluent method for adding an input to <see cref="Inputs"/>.
+    /// </summary>
+    InputDefinition WithInput(Action<InputDefinition> setup);
+    
+    /// <summary>
+    /// A fluent method for adding an input to <see cref="Inputs"/>.
+    /// </summary>
+    IWorkflowBuilder WithInput(InputDefinition inputDefinition);
 
     /// <summary>
     /// A fluent method for adding a property to <see cref="CustomProperties"/>.

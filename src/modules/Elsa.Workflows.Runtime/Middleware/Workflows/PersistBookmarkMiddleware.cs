@@ -1,7 +1,7 @@
-using Elsa.Workflows.Core;
-using Elsa.Workflows.Core.Helpers;
-using Elsa.Workflows.Core.Pipelines.WorkflowExecution;
+using Elsa.Workflows.Helpers;
+using Elsa.Workflows.Pipelines.WorkflowExecution;
 using Elsa.Workflows.Runtime.Contracts;
+using Elsa.Workflows.Runtime.Requests;
 
 namespace Elsa.Workflows.Runtime.Middleware.Workflows;
 
@@ -25,6 +25,7 @@ public class PersistBookmarkMiddleware : WorkflowExecutionMiddleware
         await Next(context);
         var updatedBookmarks = context.Bookmarks.ToList();
         var diff = Diff.For(originalBookmarks, updatedBookmarks);
-        await _bookmarksPersister.PersistBookmarksAsync(context, diff);
+        var bookmarkRequest = new UpdateBookmarksRequest(context.Id, diff, context.CorrelationId);
+        await _bookmarksPersister.PersistBookmarksAsync(bookmarkRequest);
     }
 }
