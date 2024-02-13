@@ -35,9 +35,9 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG_NAME=${{ github.ref }} # e.g., refs/tags/preview-740-hotfix-1
             TAG_NAME=${TAG_NAME#refs/tags/} # remove the refs/tags/ prefix
-            echo "VERSION=3.0.0-preview-${TAG_NAME}.${{github.run_number}}" >> $GITHUB_ENV
+            echo "VERSION=3.1.0-preview-${TAG_NAME}.${{github.run_number}}" >> $GITHUB_ENV
           else
-            echo "VERSION=3.0.0-preview.${{env.package_number_reference}}.${{github.run_number}}" >> $GITHUB_ENV
+            echo "VERSION=3.1.0-preview.${{env.package_number_reference}}.${{github.run_number}}" >> $GITHUB_ENV
           fi
       
       - name: Build
