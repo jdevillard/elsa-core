@@ -71,7 +71,17 @@ public class AzureServiceBusFeature : FeatureBase
             .AddSingleton(ServiceBusClientFactory)
             .AddSingleton<ConfigurationQueueTopicAndSubscriptionProvider>()
             .AddSingleton<IWorkerManager, WorkerManager>()
-            .AddTransient<IServiceBusInitializer, ServiceBusInitializer>();
+            .AddTransient<IServiceBusInitializer, ServiceBusInitializer>(sp =>
+            {
+                var serviceScopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
+                using var scope = serviceScopeFactory.CreateScope();
+                return new ServiceBusInitializer(
+                    scope.ServiceProvider.GetRequiredService<ServiceBusAdministrationClient>()
+                    , scope.ServiceProvider.GetRequiredService<IEnumerable<IQueueProvider>>()
+                    , scope.ServiceProvider.GetRequiredService<IEnumerable<ITopicProvider>>()
+                    , scope.ServiceProvider.GetRequiredService<IEnumerable<ISubscriptionProvider>>()
+                    );
+            });
 
         // Definition providers.
         Services
