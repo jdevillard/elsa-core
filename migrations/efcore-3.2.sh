@@ -16,6 +16,8 @@ for module in "${mods[@]}"; do
         echo "Updating migrations for $provider..."
         echo "Provider path: ${providerPath:?}/${migrationsPath}"
         echo "Migrations path: $migrationsPath"
-        ef-migration-runtime-schema --interface Elsa.EntityFrameworkCore.Common.Contracts.IElsaDbContextSchema --efOptions "migrations add V3_2 -c ""$module""ElsaDbContext -p ""$providerPath""  -o ""$migrationsPath"""
+
+        # Run the migrations command using version 1.0.1 of ef-migration-runtime-schema
+        dotnet-ef-core-runtime-schema --interface Elsa.EntityFrameworkCore.Common.Contracts.IElsaDbContextSchema -- migrations add V3_2 -c ""$module""ElsaDbContext -p ""$providerPath""  -o ""$migrationsPath""
     done
 done

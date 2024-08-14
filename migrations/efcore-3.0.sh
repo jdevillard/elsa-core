@@ -30,7 +30,7 @@ for module in "${mods[@]}"; do
         # 1. Delete the existing migrations folder
         rm -rf "${providerPath:?}/${migrationsPath}"
     
-        # 2. Run the migrations command
-        dotnet ef migrations add Initial -c "$module"ElsaDbContext -p "$providerPath"  -o "$migrationsPath" -- --connectionString "${connStrings[$provider]}"
+        # 2. Run the migrations command using version 1.0.1 of ef-migration-runtime-schema 
+        dotnet-ef-core-runtime-schema --interface Elsa.EntityFrameworkCore.Common.Contracts.IElsaDbContextSchema -- migrations add Initial -c ""$module""ElsaDbContext -p ""$providerPath""  -o ""$migrationsPath"" --connectionString "${connStrings[$provider]}"
     done
 done
